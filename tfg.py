@@ -1,11 +1,10 @@
-#syntax: python3 tikzfractalgenerator.py FILENAME LEVEL 4N-CARPET-N
-
+#syntax: python3 tikzfractalgenerator.py
 
 #tikzfractalgenerator
 #by christopher hayes @ uconn
 
 #note: tikz cuts off values deeper than 3 or 4 decimal places ( double check ) so large values are recommended
-#       with a small [scale=?] modifier. in fact it may be smarter to blow up the fractal, and not contract.  
+#       with a small [scale=?] modifier. in fact it may be smarter to blow up the fractal, and not contract.
 
 #input tikz script for level 0 cell (tikz language)
 #input contractions + desired level (manually in script itself / numpy)
@@ -14,7 +13,7 @@
 #applies contractions to level 0 cell to desired level
 #(do later) deletes repeated edges / vertices for better look.
 #       due to numpy inaccuracies will need small-radius detection instead of equality.
-#       would be wise to sort stored edges by nearness (x coordinate then y coordinate?) 
+#       would be wise to sort stored edges by nearness (x coordinate then y coordinate?)
 
 #outputs initial graph in terminal, tikz script for desired pre-fractal (tikz language) into outputtikz.tex file in same folder
 
@@ -41,7 +40,7 @@ if len(sys.argv) > 3:
     N = int(sys.argv[3])
 
 
-totalmaps = 7 #set equal to number of similitudes 
+totalmaps = 7 #set equal to number of similitudes
 
 example4N = ""
 for i in range(4*N):
@@ -99,7 +98,7 @@ L02 = np.exp(((2*(0+1) + 1)*1j*np.pi)/(4*N))
 LN1 = np.exp(((2*(N) + 1)*1j*np.pi)/(4*N))
 LN2 = np.exp(((2*(N+1) + 1)*1j*np.pi)/(4*N))
 L3Nm11 = np.exp(((2*(3*N-1) + 1)*1j*np.pi)/(4*N))
-L3Nm12 = np.exp(((2*(3*N) + 1)*1j*np.pi)/(4*N)) 
+L3Nm12 = np.exp(((2*(3*N) + 1)*1j*np.pi)/(4*N))
 M0 = (L01 + L02)/2
 MN = (LN1 + LN2)/2
 M3 = (L3Nm11 + L3Nm12)/2
@@ -191,7 +190,7 @@ examplesquare = """\draw (0, 0) -- (4, 0);
 \draw (4, 4) -- (0, 4);
 \draw (0, 4) -- (0, 0);"""
 
-def main():  
+def main():
     thefilename = "outputtikz.tex"
     if len(sys.argv) > 1:
         thefilename = sys.argv[1] + ".tex"
@@ -202,9 +201,8 @@ def main():
     writetofile(theoutput, thefilename)
     print("Complete")
 
-###
 
-def similitudes(no, point, key = "Hepta"): #input complex point and similitude label no / PLACE THEM HERE FROM ABOVE / ENTER MANUALLY
+def similitudes(no, point, key = "SG2"): #input complex point and similitude label no / PLACE THEM HERE FROM ABOVE / ENTER MANUALLY
     global N
     if key == None: #enter custom / manual similitudes below
         contratio = 1/(1 + (1/np.tan(np.pi/(4*N))))
@@ -221,7 +219,7 @@ def similitudes(no, point, key = "Hepta"): #input complex point and similitude l
         contratio = HEPTCONT
         contpoint = np.exp(((2*no)*1j*np.pi)/(7))
         return contratio*(point - contpoint) + contpoint
-        
+
     if key == "4Nold": #4N carpet OLD OLD OLD OLD
         contratio = 1/(1 + (1/np.tan(np.pi/(4*N))))
         if no % 2 == 1:
@@ -241,7 +239,7 @@ def similitudes(no, point, key = "Hepta"): #input complex point and similitude l
             return (11j + point)*0.5j
         else:
             return np.complex64(0)
-        
+
     if key == "SG2": #standard equilateral side 10
         if no == 0:
             return point*0.5
@@ -301,7 +299,7 @@ def similitudes(no, point, key = "Hepta"): #input complex point and similitude l
             return 0.5*(point - 4j) + 4j
         else:
             return np.complex64(0)
-        
+
     if key == "AfC1":
         if no == 0:
             return point*(0.25) + 0j
@@ -313,7 +311,7 @@ def similitudes(no, point, key = "Hepta"): #input complex point and similitude l
             return 0.25*(point - 8j) + 8j
         if no == 4:
             return 0.5*(point.real - 4) + 0.25*(point.imag)*1j + 4
-        if no == 6: 
+        if no == 6:
             return 0.5*(point.real - 4) + 0.25*(point.imag - 8)*1j + 4 + 8j
         if no == 7:
             return 0.25*(point.real) + 0.5*(point.imag - 4)*1j + 4j
@@ -321,10 +319,10 @@ def similitudes(no, point, key = "Hepta"): #input complex point and similitude l
             return 0.25*(point.real - 8) + 0.5*(point.imag - 4)*1j + 8 + 4j
         else:
             return np.complex64(0)
-        
+
     else:
         return np.complex64(0)
-    
+
 def sim1(point):
     return point*0.2
 
@@ -355,31 +353,48 @@ class point:
         self.x = newxcoord
         self.y = newycoord
         self.z = newzcoord
-        
+
     def tikzform(self):
         return "(" + str(self.x) + ", " + str(self.y) + ")"
 
     def updateZ(self):
         self.z = self.x + ((self.y)*1j)
-        
+
     def updateXY(self):
         self.x = self.z.real
         self.y = self.z.imag
 
-    def map(self, no, function): #no is label number for function, e.g. map(1, similitudes) maps the no. 1 similitude. 
+    def map(self, no, function): #no is label number for function, e.g. map(1, similitudes) maps the no. 1 similitude.
         self.z = function(no, self.z)
         self.x = self.z.real
         self.y = self.z.imag
 
+    def trytoabsorb(self, otherpoint): #replaces other point with this point if they are very close to each other.
+        if np.isclose(self.z, otherpoint.z):
+#            print("Absorption occured.")
+            otherpoint = self
+        else:
+            pass
+
+
 class edge:
-    def __init__(self, point1, point2, modifiers = None): #Modifiers such as dotted, dashed, ->, <->, etc
+    def __init__(self, point1, point2, weight = 1, options = ""): #Modifiers such as dotted, dashed, ->, <->, etc
         self.pointlist = [point1, point2]
-        self.options = "" #for now
+        self.options = options #for now
+        self.weight = weight
+        self.p1 = self.pointlist[0]
+        self.p2 = self.pointlist[1]
 #        self.tikzform = "\draw " + self.options + self.pointlist[0].tikzform() + "--" + self.pointlist[1].tikzform() + ";"
 
     def map(self, no, function):
         for pt in self.pointlist:
             pt.map(no, function)
+
+    def reorder(self):
+        if self.p1.x > self.p2.x:
+            self.pointlist = [self.p2, self.p1]
+        if self.p1.x == self.p2.x and self.p2.y > self.p1.y:
+            self.pointlist = [self.pt2, self.p1]
 
     def tikzhalf(self):
         return self.pointlist[0].tikzform()
@@ -387,13 +402,94 @@ class edge:
     def tikzform(self):
         return "\draw " + self.options + self.pointlist[0].tikzform() + "--" + self.pointlist[1].tikzform() + ";"
 
+    def deleteothersameedge(self, otheredge): #returns true if two edges have the same points.
+        if self.pointlist == otheredge.pointlist or self.pointlist == otheredge.pointlist.reverse():
+            return True
+        else:
+            return False
+
+    def noSelfLoops(self):
+        if self.pointlist[0] == self.pointlist[1]:
+            del self
+
+    def setWeightAsDistance(self): #sets weight to be distances.
+        pass #do later
+
+class graph:
+    def __init__(self, edges = list(), vertices = [], weights = list()):
+        self.edges = edges
+        self.weights = weights
+        self.vertices = vertices
+        if vertices == [] and len(self.edges) > 0:
+            for edge in self.edges:
+                if edge.p1 not in self.vertices:
+                    self.vertices.append(edge.p1)
+                if edge.p2 not in self.vertices:
+                    self.vertices.append(edge.p2)
+        self.eliminateVertexRedundancies()
+        if weights == []:
+            for edge in self.edges:
+                self.weights.append(1)
+
+    def connect(point1, point2, weight = 1):
+        if point1 not in self.vertices:
+            self.vertices.append(point1)
+        if point2 not in self.vertices:
+            self.vertices.append(point2)
+
+    def eliminateVertexRedundancies(self):
+        for absorbers in self.vertices:
+            for targets in self.vertices:
+                if targets != absorbers:
+                    absorbers.trytoabsorb(targets)
+
+    def reducevertices(self):
+        newvertexlist = []
+        newvertexlisttikzforms = []
+        for vertex in self.vertices:
+            if vertex.tikzform() not in newvertexlisttikzforms:
+                newvertexlist.append(vertex)
+                newvertexlisttikzforms.append(vertex.tikzform())
+        self.vertices = newvertexlist
+
+    def reduceedges(self):
+        newedgelist = []
+        newedgelisttikzforms = []
+        for edge in self.edges:
+            edge.reorder()
+        for edge in self.edges:
+            if edge.p1.x == edge.p2.x and edge.p1.y == edge.p2.y:
+                break
+            if edge.tikzform() not in newedgelisttikzforms:
+                newedgelist.append(edge)
+                newedgelisttikzforms.append(edge.tikzform())
+        self.edges = newedgelist
+
+    def vertexupdate(self):
+        newvertexlist = []
+        newvertexlisttikzforms = []
+        for edge in self.edges:
+            edge.reorder()
+            if edge.p1.tikzform() not in newvertexlisttikzforms:
+                newvertexlisttikzforms.append(edge.p1.tikzform())
+                newvertexlist.append(edge.p1)
+            if edge.p2.tikzform() not in newvertexlisttikzforms:
+                newvertexlisttikzforms.append(edge.p2.tikzform())
+                newvertexlist.append(edge.p2)
+        self.vertices = newvertexlist
+
+
+    def reduce(self):
+        self.reduceedges()
+        self.vertexupdate()
+
 def edgelisttostring(edgelist): #input is a list, [optionstring, edge1, edge2, etc]
     outputstring = str(edgelist[0])+"] "
     for i in range(1, len(edgelist)):
         outputstring += (edgelist[i].tikzhalf()) + "--"
     outputstring += edgelist[len(edgelist)-1].pointlist[1].tikzform()+";"
     return outputstring
-    
+
 #tikz script parsing functions
 
 def edgeconverter(edgestringwithspaces): #form is ALWAYS "\draw [options] (x1, y1) -- (x2, y2);" spaces are deleted/ignored
@@ -411,7 +507,7 @@ def edgeconverter(edgestringwithspaces): #form is ALWAYS "\draw [options] (x1, y
     pointslist = edgeonly.split("--") #returns [point1, point2]
     return edge(pointstringconvert(pointslist[0]), pointstringconvert(pointslist[1]))
 
-def newedgeconverter(edgestringwithspace): #return [optionstring, edge1, edge2, etc, edge(N-1)] from \draw command with N points. 
+def newedgeconverter(edgestringwithspace): #return [optionstring, edge1, edge2, etc, edge(N-1)] from \draw command with N points.
     edgestring = edgestringwithspace.replace(" ", "") #removes whitespace and \n
     optionsandedge = edgestring.split("]")
     if len(optionsandedge) == 1:
@@ -476,7 +572,6 @@ def fractalizer2(levels, tikzinput):
         outputstring += edges.tikzform() + "\n"
     return outputstring
 
-
 def newfractalizer2(levels, tikzinput):
     global totalmaps
     lines = tikzinput.splitlines()
@@ -493,13 +588,13 @@ def newfractalizer2(levels, tikzinput):
         for i in range(howmanynewobjects): #make enough new "temp" objects
             zeero = np.float32(0)
             negone = np.float32(-1)
-            newobjectlist.append([]) #[] will be the new object (options, edge1, edge2...) 
+            newobjectlist.append([]) #[] will be the new object (options, edge1, edge2...)
             for k in range(objectlengthlist[i // totalmaps] - 1):
                 newobjectlist[i].append(edge(point(negone, zeero), point(zeero, negone)))
 
         for j in range(howmanynewobjects):
-            newobjectlist[j].insert(0, objectlist[j // totalmaps][0]) 
-        
+            newobjectlist[j].insert(0, objectlist[j // totalmaps][0])
+
         curcount = 0
         for similnum in range(totalmaps):
             for objects in objectlist:
@@ -525,15 +620,54 @@ def newfractalizer2(levels, tikzinput):
         outputstring += edgelisttostring(objects) + "\n"
     return outputstring
 
+#works specifically with graph objects
+
+def tikztograph(tikzinput):
+    lines = tikzinput.splitlines()
+    edgelist = []
+    for edgestring in lines:
+        edgelist.append(edgeconverter(edgestring))
+    thegraph = graph(edgelist)
+    thegraph.reduce()
+    return thegraph
+
+def graphfractalizer(thegraph, levels):
+    global totalmaps
+    for step in range(levels):
+        print("Doing level " + str(step + 1) + "...")
+        newedgelist = []
+        howmanynewedges = totalmaps*len(thegraph.edges)
+        for i in range(howmanynewedges): #make enough new "temp" edges
+            zeero = np.float32(0)
+            negone = np.float32(-1)
+            newedgelist.append(edge(point(negone, zeero), point(zeero, negone)))
+        count = 1
+        curcount = 0
+        for similnum in range(totalmaps):
+            for edges in thegraph.edges:
+                newedgelist[curcount].pointlist[0].x = edges.pointlist[0].x
+                newedgelist[curcount].pointlist[0].y = edges.pointlist[0].y
+                newedgelist[curcount].pointlist[1].x = edges.pointlist[1].x
+                newedgelist[curcount].pointlist[1].y = edges.pointlist[1].y
+                newedgelist[curcount].pointlist[0].updateZ()
+                newedgelist[curcount].pointlist[1].updateZ()
+                newedgelist[curcount].map(similnum, similitudes)
+                curcount += 1
+            count += 1
+        thegraph = graph(newedgelist)
+        #thegraph.reduce()
+    return thegraph
+
 #file writing
 
 def writetofile(string, thefilename = "outputtikz.tex"):
     thefile = open(thefilename, "w")
     thefile.write(string)
     thefile.close()
-    
+
 #main code bit
 
-main() 
-
-
+if __name__ == "__main__":
+    main()
+else:
+    print("Imported TikzFractalGenerator.")
